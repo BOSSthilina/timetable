@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Fixed Master Class Matrix</title>
+    <title>Pro Master Class Matrix Editor</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         ::-webkit-scrollbar { width: 6px; height: 6px; }
@@ -17,9 +17,9 @@
     <header class="bg-gray-900 border-b border-gray-800 py-4 px-6 shadow-xl sticky top-0 z-50 flex flex-col sm:flex-row justify-between items-center gap-4">
         <div>
             <h1 class="text-xl font-black tracking-wider text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 to-cyan-400">
-                ⚡ LIVE TIMETABLE EDITOR (FIXED)
+                ⚡ MASTER CLASS TIMETABLE PRO
             </h1>
-            <p class="text-xs text-gray-400">Perfect column locking algorithm active</p>
+            <p class="text-xs text-gray-400">Click the ✏️ icon on any slot to edit it live</p>
         </div>
         <div class="flex items-center gap-2">
             <button onclick="resetToDefault()" class="bg-red-900/40 hover:bg-red-900/70 text-red-300 border border-red-700/50 text-xs font-bold px-3 py-1.5 rounded transition">
@@ -33,8 +33,8 @@
     <main class="max-w-[1600px] mx-auto p-4 lg:p-6 grid grid-cols-1 xl:grid-cols-4 gap-6">
         
         <!-- Left Sidebar: The Control Editor Panel -->
-        <div class="bg-gray-900 border border-gray-800 p-5 rounded-2xl shadow-xl h-fit">
-            <h2 class="text-md font-bold text-indigo-400 mb-4 flex items-center gap-2">⚙️ Slot Controller</h2>
+        <div class="bg-gray-900 border border-gray-800 p-5 rounded-2xl shadow-xl h-fit sticky top-24">
+            <h2 id="editorTitle" class="text-md font-bold text-indigo-400 mb-4 flex items-center gap-2">⚙️ Add New Slot</h2>
             
             <form id="matrixForm" class="flex flex-col gap-4">
                 <div>
@@ -67,28 +67,32 @@
                 </div>
 
                 <div>
-                    <label class="block text-xs font-semibold text-gray-400 mb-1">Color Style Theme</label>
+                    <label class="block text-xs font-semibold text-gray-400 mb-1">Grade / Color Style</label>
                     <select id="slotColor" class="w-full bg-gray-800 border border-gray-700 rounded-lg p-2 text-sm text-white focus:outline-none focus:border-indigo-500">
-                        <option value="red">Red (Free Slots)</option>
-                        <option value="cyan">Cyan (Grade 8 etc.)</option>
-                        <option value="yellow">Yellow (Grade 9 etc.)</option>
-                        <option value="emerald">Green (Grade 10 etc.)</option>
-                        <option value="purple">Purple (Grade 6 etc.)</option>
-                        <option value="orange">Orange (Revision/Group)</option>
-                        <option value="blue">Blue (Grade 8 Individual)</option>
-                        <option value="black">Deep Black (Individual/Names)</option>
-                        <option value="gray">Slate Gray</option>
+                        <option value="free">🔴 FREE Slots (Red)</option>
+                        <option value="g6">🔮 Grade 6 (Purple)</option>
+                        <option value="g7">🍇 Grade 7 (Indigo)</option>
+                        <option value="g8">💎 Grade 8 (Cyan)</option>
+                        <option value="g9">🍊 Grade 9 (Orange)</option>
+                        <option value="g10">🟢 Grade 10 (Emerald Green)</option>
+                        <option value="g11">💖 Grade 11 (Fuchsia Pink)</option>
+                        <option value="individual">🥷 Individual / Names (Deep Black)</option>
                     </select>
                 </div>
 
                 <div class="flex items-center gap-2 py-1">
                     <input type="checkbox" id="slotTilt" class="w-4 h-4 rounded bg-gray-800 border-gray-700 text-indigo-600 focus:ring-0 focus:ring-offset-0">
-                    <label for="slotTilt" class="text-xs font-bold text-yellow-400 cursor-pointer select-none">🔥 Slant/Tilt Text Layout (අර ඇලවෙන ස්ටයිල් එක)</label>
+                    <label for="slotTilt" class="text-xs font-bold text-yellow-400 cursor-pointer select-none">🔥 Slant/Tilt Layout (ඇලවෙන ස්ටයිල් එක)</label>
                 </div>
 
-                <button type="submit" class="bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-sm py-2.5 rounded-lg transition shadow-md mt-2">
-                    🚀 Inject Into Matrix
-                </button>
+                <div class="flex flex-col gap-2">
+                    <button type="submit" id="submitBtn" class="bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-sm py-2.5 rounded-lg transition shadow-md mt-2">
+                        🚀 Inject Into Matrix
+                    </button>
+                    <button type="button" id="cancelEditBtn" onclick="cancelEditingState()" class="hidden bg-gray-800 hover:bg-gray-700 text-gray-300 font-bold text-xs py-2 rounded-lg transition border border-gray-700">
+                        ❌ Cancel Editing
+                    </button>
+                </div>
             </form>
         </div>
 
@@ -121,57 +125,60 @@
             "17:30", "18:00", "18:30", "19:00", "19:30", "20:00", "20:30", "21:00", "21:30", "22:00"
         ];
 
-        // Seed configuration dataset mirroring image_62ed45.png structure perfectly
+        // Seed Dataset mapped with premium custom grade colors based on image_62ed45.png
         const initialDataset = [
-            { id: 1, day: 1, start: "08:30", end: "13:00", name: "FREE", color: "red", tilt: false },
-            { id: 2, day: 1, start: "15:00", end: "17:00", name: "Grade 8 Group", color: "cyan", tilt: false },
-            { id: 3, day: 1, start: "17:30", end: "19:30", name: "Grade 9", color: "yellow", tilt: false },
-            { id: 4, day: 1, start: "20:00", end: "22:00", name: "Oshadha", color: "black", tilt: false },
-            { id: 5, day: 2, start: "08:30", end: "13:00", name: "FREE", color: "red", tilt: false },
-            { id: 6, day: 2, start: "15:00", end: "17:00", name: "Grade 8 Group", color: "cyan", tilt: false },
-            { id: 7, day: 2, start: "17:30", end: "19:30", name: "Senudima", color: "emerald", tilt: false },
-            { id: 8, day: 2, start: "20:00", end: "22:00", name: "FREE", color: "red", tilt: false },
-            { id: 9, day: 3, start: "08:30", end: "11:00", name: "2nd Shi", color: "black", tilt: true },
-            { id: 10, day: 3, start: "11:00", end: "13:00", name: "FREE", color: "red", tilt: false },
-            { id: 11, day: 3, start: "15:00", end: "17:00", name: "Group Dz 10", color: "emerald", tilt: false },
-            { id: 12, day: 3, start: "17:30", end: "19:30", name: "Lithuli", color: "black", tilt: false },
-            { id: 13, day: 3, start: "20:00", end: "22:00", name: "Suvin", color: "black", tilt: false },
-            { id: 14, day: 4, start: "08:30", end: "13:00", name: "FREE", color: "red", tilt: false },
-            { id: 15, day: 4, start: "15:00", end: "17:00", name: "Group Dz 10", color: "emerald", tilt: false },
-            { id: 16, day: 4, start: "17:30", end: "22:00", name: "FREE", color: "red", tilt: false },
-            { id: 17, day: 5, start: "08:30", end: "13:00", name: "Paper Dz", color: "yellow", tilt: true },
-            { id: 18, day: 5, start: "15:00", end: "17:00", name: "Grade 6", color: "purple", tilt: false },
-            { id: 19, day: 5, start: "17:30", end: "19:30", name: "Yasho", color: "black", tilt: false },
-            { id: 20, day: 5, start: "20:00", end: "22:00", name: "Sadini", color: "black", tilt: false },
-            { id: 21, day: 6, start: "08:30", end: "11:00", name: "Group Clz 7", color: "gray", tilt: true },
-            { id: 22, day: 6, start: "11:00", end: "13:30", name: "FREE", color: "red", tilt: false },
-            { id: 23, day: 6, start: "14:00", end: "16:30", name: "Grade 9 Group", color: "orange", tilt: false },
-            { id: 24, day: 6, start: "17:00", end: "20:30", name: "Grade 11 Group", color: "black", tilt: false },
-            { id: 25, day: 6, start: "20:30", end: "22:00", name: "FREE", color: "red", tilt: false },
-            { id: 26, day: 7, start: "08:30", end: "11:00", name: "9 Group", color: "orange", tilt: false },
-            { id: 27, day: 7, start: "11:00", end: "13:00", name: "Imesha", color: "black", tilt: false },
-            { id: 28, day: 7, start: "14:30", end: "17:00", name: "Grade 8", color: "blue", tilt: false },
-            { id: 29, day: 7, start: "17:30", end: "20:00", name: "10 Paper Clz", color: "emerald", tilt: false },
-            { id: 30, day: 7, start: "20:00", end: "22:00", name: "FREE", color: "red", tilt: false }
+            { id: 1, day: 1, start: "08:30", end: "13:00", name: "FREE", color: "free", tilt: false },
+            { id: 2, day: 1, start: "15:00", end: "17:00", name: "Grade 8 Group", color: "g8", tilt: false },
+            { id: 3, day: 1, start: "17:30", end: "19:30", name: "Grade 9", color: "g9", tilt: false },
+            { id: 4, day: 1, start: "20:00", end: "22:00", name: "Oshadha", color: "individual", tilt: false },
+            { id: 5, day: 2, start: "08:30", end: "13:00", name: "FREE", color: "free", tilt: false },
+            { id: 6, day: 2, start: "15:00", end: "17:00", name: "Grade 8 Group", color: "g8", tilt: false },
+            { id: 7, day: 2, start: "17:30", end: "19:30", name: "Senudima", color: "g10", tilt: false },
+            { id: 8, day: 2, start: "20:00", end: "22:00", name: "FREE", color: "free", tilt: false },
+            { id: 9, day: 3, start: "08:30", end: "11:00", name: "2nd Shi", color: "individual", tilt: true },
+            { id: 10, day: 3, start: "11:00", end: "13:00", name: "FREE", color: "free", tilt: false },
+            { id: 11, day: 3, start: "15:00", end: "17:00", name: "Group Dz 10", color: "g10", tilt: false },
+            { id: 12, day: 3, start: "17:30", end: "19:30", name: "Lithuli", color: "individual", tilt: false },
+            { id: 13, day: 3, start: "20:00", end: "22:00", name: "Suvin", color: "individual", tilt: false },
+            { id: 14, day: 4, start: "08:30", end: "13:00", name: "FREE", color: "free", tilt: false },
+            { id: 15, day: 4, start: "15:00", end: "17:00", name: "Group Dz 10", color: "g10", tilt: false },
+            { id: 16, day: 4, start: "17:30", end: "22:00", name: "FREE", color: "free", tilt: false },
+            { id: 17, day: 5, start: "08:30", end: "13:00", name: "Paper Dz", color: "g9", tilt: true },
+            { id: 18, day: 5, start: "15:00", end: "17:00", name: "Grade 6", color: "g6", tilt: false },
+            { id: 19, day: 5, start: "17:30", end: "19:30", name: "Yasho", color: "individual", tilt: false },
+            { id: 20, day: 5, start: "20:00", end: "22:00", name: "Sadini", color: "individual", tilt: false },
+            { id: 21, day: 6, start: "08:30", end: "11:00", name: "Group Clz 7", color: "g7", tilt: true },
+            { id: 22, day: 6, start: "11:00", end: "13:30", name: "FREE", color: "free", tilt: false },
+            { id: 23, day: 6, start: "14:00", end: "16:30", name: "Grade 9 Group", color: "g9", tilt: false },
+            { id: 24, day: 6, start: "17:00", end: "20:30", name: "Grade 11 Group", color: "g11", tilt: false },
+            { id: 25, day: 6, start: "20:30", end: "22:00", name: "FREE", color: "free", tilt: false },
+            { id: 26, day: 7, start: "08:30", end: "11:00", name: "9 Group", color: "g9", tilt: false },
+            { id: 27, day: 7, start: "11:00", end: "13:00", name: "Imesha", color: "individual", tilt: false },
+            { id: 28, day: 7, start: "14:30", end: "17:00", name: "Grade 8", color: "g8", tilt: false },
+            { id: 29, day: 7, start: "17:30", end: "20:00", name: "10 Paper Clz", color: "g10", tilt: false },
+            { id: 30, day: 7, start: "20:00", end: "22:00", name: "FREE", color: "free", tilt: false }
         ];
 
+        // Premium Color Mappings for each specific grade
         const colorMap = {
-            red: "bg-red-600 text-white font-extrabold border border-red-500 shadow-lg shadow-red-950/40 uppercase",
-            cyan: "bg-cyan-500 text-slate-950 font-bold border border-cyan-400",
-            yellow: "bg-yellow-400 text-slate-950 font-bold border border-yellow-300",
-            emerald: "bg-emerald-500 text-white font-bold border border-emerald-400",
-            purple: "bg-purple-600 text-white font-bold border border-purple-500",
-            orange: "bg-orange-500 text-white font-bold border border-orange-400",
-            blue: "bg-blue-600 text-white font-bold border border-blue-500",
-            black: "bg-neutral-950 text-gray-200 border border-neutral-800",
-            gray: "bg-slate-500 text-white font-bold border border-slate-400"
+            free: "bg-red-600 text-white font-extrabold border border-red-500 shadow-lg shadow-red-950/40 uppercase",
+            g6: "bg-purple-600 text-white font-bold border border-purple-400 shadow-md shadow-purple-900/20",
+            g7: "bg-indigo-600 text-white font-bold border border-indigo-400 shadow-md shadow-indigo-900/20",
+            g8: "bg-cyan-500 text-slate-950 font-bold border border-cyan-300 shadow-md",
+            g9: "bg-orange-500 text-white font-bold border border-orange-400 shadow-md",
+            g10: "bg-emerald-600 text-white font-bold border border-emerald-400 shadow-md",
+            g11: "bg-fuchsia-600 text-white font-bold border border-fuchsia-400 shadow-md",
+            individual: "bg-neutral-950 text-gray-200 border border-neutral-800"
         };
 
         let currentSchedule = JSON.parse(localStorage.getItem('matrix_schedule')) || initialDataset;
+        let editingId = null; // State holder for the active editing slot
 
         function populateTimeDropdowns() {
             const startSelect = document.getElementById('slotStart');
             const endSelect = document.getElementById('slotEnd');
+            startSelect.innerHTML = '';
+            endSelect.innerHTML = '';
             
             timeSlots.forEach(t => {
                 startSelect.innerHTML += `<option value="${t}">${t}</option>`;
@@ -182,13 +189,12 @@
 
         function renderEngine() {
             const container = document.getElementById('matrixContainer');
-            
             const headersCount = 8; 
             while (container.children.length > headersCount) {
                 container.removeChild(container.lastChild);
             }
 
-            // Build structural matrix and FORCE column locking via gridColumn/gridRow styles
+            // Build structural spreadsheet grids
             timeSlots.forEach((time, rowIndex) => {
                 const timeTag = document.createElement('div');
                 timeTag.className = "bg-gray-900 border border-gray-800 text-center text-[11px] font-mono py-2 font-bold text-gray-400 flex items-center justify-center rounded border-l-2 border-l-cyan-500 shadow-sm";
@@ -201,16 +207,13 @@
                     const blockEmpty = document.createElement('div');
                     blockEmpty.id = `cell-${d}-${time.replace(':', '')}`;
                     blockEmpty.className = "bg-gray-900/20 border border-gray-800/40 rounded min-h-[38px] transition-all hover:bg-gray-800/30";
-                    
-                    // Critical Fix: Lock the base empty cell to its exact coordinate
                     blockEmpty.style.gridColumn = `${d + 1}`;
                     blockEmpty.style.gridRow = `${rowIndex + 2}`;
-                    
                     container.appendChild(blockEmpty);
                 }
             });
 
-            // Overlay scheduled blocks with hard-locked coordinates
+            // Injection and positioning core loop
             currentSchedule.forEach(item => {
                 const startPos = timeSlots.indexOf(item.start);
                 const endPos = timeSlots.indexOf(item.end);
@@ -221,21 +224,25 @@
                     
                     if (targetBaseCell) {
                         const spanRows = endPos - startPos;
-                        const defaultTheme = colorMap[item.color] || colorMap.gray;
+                        const defaultTheme = colorMap[item.color] || colorMap.individual;
                         const tiltClass = item.tilt ? "transform -rotate-6 scale-[0.97] z-10 font-black shadow-xl" : "";
+                        const editingClass = (editingId === item.id) ? "ring-4 ring-yellow-400 animate-pulse z-30" : "";
 
-                        // Critical Fix: Hard lock the event card to its correct day column & span rows explicitly
                         targetBaseCell.style.gridColumn = `${item.day + 1}`;
                         targetBaseCell.style.gridRow = `${startPos + 2} / span ${spanRows}`;
                         
-                        targetBaseCell.className = `${defaultTheme} ${tiltClass} rounded-lg p-1.5 text-center text-xs flex flex-col justify-center items-center relative group min-h-[38px] transition-transform duration-100 hover:scale-[1.02] hover:z-20`;
+                        targetBaseCell.className = `${defaultTheme} ${tiltClass} ${editingClass} rounded-lg p-1.5 text-center text-xs flex flex-col justify-center items-center relative group min-h-[38px] transition-all duration-100 hover:scale-[1.02] hover:z-20`;
                         targetBaseCell.innerHTML = `
                             <span class="truncate max-w-full block px-1">${item.name}</span>
                             <span class="text-[9px] opacity-75 font-mono">${item.start}-${item.end}</span>
-                            <button onclick="removeSlot(${item.id})" class="absolute top-0.5 right-1 text-slate-400 hover:text-red-400 font-black text-xs opacity-0 group-hover:opacity-100 transition-opacity bg-gray-900/60 rounded px-1.5 py-0.5 shadow">×</button>
+                            
+                            <!-- Control Action Buttons Layer (Visible on Hover) -->
+                            <div class="absolute top-0.5 left-0.5 right-0.5 flex justify-between opacity-0 group-hover:opacity-100 transition-opacity z-30">
+                                <button onclick="editSlot(${item.id})" title="Edit Class" class="text-white hover:text-amber-300 font-bold text-[10px] bg-slate-900/90 rounded px-1.5 py-0.5 shadow border border-gray-700">✏️</button>
+                                <button onclick="removeSlot(${item.id})" title="Delete Class" class="text-white hover:text-red-400 font-black text-xs bg-slate-900/90 rounded px-1.5 py-0.5 shadow border border-gray-700">×</button>
+                            </div>
                         `;
 
-                        // Evacuate grid layout collisions safely without breaking structure flow
                         for (let step = startPos + 1; step < endPos; step++) {
                             const duplicateId = `cell-${item.day}-${timeSlots[step].replace(':', '')}`;
                             const clearCell = document.getElementById(duplicateId);
@@ -248,37 +255,83 @@
             localStorage.setItem('matrix_schedule', JSON.stringify(currentSchedule));
         }
 
+        // Action: Load Data to Form for Editing Flow
+        window.editSlot = function(id) {
+            const slot = currentSchedule.find(x => x.id === id);
+            if (!slot) return;
+
+            editingId = id;
+            
+            // Populate form with existing configurations
+            document.getElementById('slotDay').value = slot.day;
+            document.getElementById('slotStart').value = slot.start;
+            document.getElementById('slotEnd').value = slot.end;
+            document.getElementById('slotName').value = slot.name;
+            document.getElementById('slotColor').value = slot.color;
+            document.getElementById('slotTilt').checked = slot.tilt;
+
+            // Flip Control State Layout
+            document.getElementById('editorTitle').innerHTML = "✏️ Editing Target Slot";
+            document.getElementById('editorTitle').className = "text-md font-bold text-amber-400 mb-4 flex items-center gap-2";
+            document.getElementById('submitBtn').innerText = "💾 Save & Update Slot";
+            document.getElementById('submitBtn').className = "bg-amber-600 hover:bg-amber-500 text-white font-bold text-sm py-2.5 rounded-lg transition shadow-md mt-2 cursor-pointer";
+            document.getElementById('cancelEditBtn').classList.remove('hidden');
+
+            renderEngine();
+        };
+
+        function cancelEditingState() {
+            editingId = null;
+            document.getElementById('matrixForm').reset();
+            document.getElementById('editorTitle').innerHTML = "⚙️ Add New Slot";
+            document.getElementById('editorTitle').className = "text-md font-bold text-indigo-400 mb-4 flex items-center gap-2";
+            document.getElementById('submitBtn').innerText = "🚀 Inject Into Matrix";
+            document.getElementById('submitBtn').className = "bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-sm py-2.5 rounded-lg transition shadow-md mt-2 cursor-pointer";
+            document.getElementById('cancelEditBtn').classList.add('hidden');
+            renderEngine();
+        }
+
+        // Submit Form: Handles both Insert and Update pipelines
         document.getElementById('matrixForm').addEventListener('submit', function(e) {
             e.preventDefault();
             
-            const newSlot = {
-                id: Date.now(),
-                day: parseInt(document.getElementById('slotDay').value),
-                start: document.getElementById('slotStart').value,
-                end: document.getElementById('slotEnd').value,
-                name: document.getElementById('slotName').value,
-                color: document.getElementById('slotColor').value,
-                tilt: document.getElementById('slotTilt').checked
-            };
+            const day = parseInt(document.getElementById('slotDay').value);
+            const start = document.getElementById('slotStart').value;
+            const end = document.getElementById('slotEnd').value;
+            const name = document.getElementById('slotName').value;
+            const color = document.getElementById('slotColor').value;
+            const tilt = document.getElementById('slotTilt').checked;
 
-            if (timeSlots.indexOf(newSlot.end) <= timeSlots.indexOf(newSlot.start)) {
+            if (timeSlots.indexOf(end) <= timeSlots.indexOf(start)) {
                 alert("🔴 වැරදියි මචං! End Time එකට දාන්න ඕන Start Time එකට පස්සේ තියෙන වෙලාවක්.");
                 return;
             }
 
-            currentSchedule.push(newSlot);
-            renderEngine();
-            document.getElementById('slotName').value = "";
-            document.getElementById('slotTilt').checked = false;
+            if (editingId) {
+                // Update Existing Target Pipeline
+                const idx = currentSchedule.findIndex(x => x.id === editingId);
+                if (idx !== -1) {
+                    currentSchedule[idx] = { id: editingId, day, start, end, name, color, tilt };
+                }
+                editingId = null;
+            } else {
+                // Fresh Insert Pipeline
+                currentSchedule.push({ id: Date.now(), day, start, end, name, color, tilt });
+            }
+
+            cancelEditingState();
         });
 
         window.removeSlot = function(id) {
+            if(editingId === id) editingId = null;
             currentSchedule = currentSchedule.filter(x => x.id !== id);
             renderEngine();
         };
 
         window.resetToDefault = function() {
             if(confirm("♻️ මුල්ම ටයිම් ටේබල් එකට ආයෙත් රීසෙට් කරන්නද මචං?")) {
+                editingId = null;
+                cancelEditingState();
                 currentSchedule = [...initialDataset];
                 renderEngine();
             }
